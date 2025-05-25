@@ -34,7 +34,7 @@ class Portfolio:
 
 def create_streamlit_app(llm, portfolio, clean_text):
     st.title("📧 Cold Mail Generator")
-    url_input = st.text_input("Enter a URL:", value="https://jobs.nike.com/job/R-33460")
+    url_input = st.text_input("Enter a URL:", value="https://jobs.careers.microsoft.com/global/en/search?l=en_us&pg=1&pgSz=20&o=Relevance&flt=true&ref=cms")
     submit_button = st.button("Submit")
 
     if submit_button:
