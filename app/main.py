@@ -7,9 +7,18 @@ from utils import clean_text
 import pandas as pd
 import chromadb
 import uuid
+import os
+from dotenv import load_dotenv
 
-# __import__('pysqlite3')
+load_dotenv()
+
+if "USER_AGENT" not in os.environ:
+    os.environ["USER_AGENT"] = "Cold-Mail-Generator/1.0"
+os.environ["CHROMA_TELEMETRY_ENABLED"] = "false"
+
+# Optional: force using pysqlite3 if system sqlite3 is old
 # import sys
+# __import__('pysqlite3')
 # sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 
@@ -17,18 +26,30 @@ class Portfolio:
     def __init__(self, file_path="app/resource/my_portfolio.csv"):
         self.file_path = file_path
         self.data = pd.read_csv(file_path)
-        self.chroma_client = chromadb.Client()  # no persist_directory arg
-        self.collection = self.chroma_client.get_or_create_collection(name="portfolio")
+
+       
+        self.chroma_client = chromadb.Client(
+            settings=chromadb.Settings(
+                persist_directory="./chroma_db"  
+            )
+        )
+
+    
+        try:
+            self.collection = self.chroma_client.get_or_create_collection(name="portfolio")
+        except chromadb.errors.ValueError:
+        
+            self.collection = self.chroma_client.create_collection(name="portfolio")
 
     def load_portfolio(self):
-        if not self.collection.count():
+        if self.collection.count() == 0:
             for _, row in self.data.iterrows():
                 self.collection.add(
                     documents=[row["Techstack"]],
                     metadatas=[{"links": row["Links"]}],
                     ids=[str(uuid.uuid4())]
                 )
-            # Try to persist if available
+           
             if hasattr(self.chroma_client, "persist"):
                 self.chroma_client.persist()
 
@@ -38,8 +59,13 @@ class Portfolio:
 
 
 def create_streamlit_app(llm, portfolio, clean_text):
+    st.set_page_config(layout="wide", page_title="Cold Email Generator", page_icon="📧")
     st.title("📧 Cold Mail Generator")
-    url_input = st.text_input("Enter a URL:", value="https://jobs.careers.microsoft.com/global/en/search?l=en_us&pg=1&pgSz=20&o=Relevance&flt=true&ref=cms")
+
+    url_input = st.text_input(
+        "Enter a URL:",
+        value="https://jobs.careers.microsoft.com/global/en/search?l=en_us&pg=1&pgSz=20&o=Relevance&flt=true&ref=cms"
+    )
     submit_button = st.button("Submit")
 
     if submit_button:
@@ -60,5 +86,4 @@ def create_streamlit_app(llm, portfolio, clean_text):
 if __name__ == "__main__":
     chain = Chain()
     portfolio = Portfolio()
-    st.set_page_config(layout="wide", page_title="Cold Email Generator", page_icon="📧")
     create_streamlit_app(chain, portfolio, clean_text)
