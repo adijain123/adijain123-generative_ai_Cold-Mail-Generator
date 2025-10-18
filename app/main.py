@@ -35,13 +35,13 @@ class Portfolio:
         self.data = pd.read_csv(file_path)
 
         # Use Chroma with local persistence
-        self.chroma_client = chromadb.Client(
-            settings=chromadb.Settings(persist_directory="./chroma_db")
+        self.chroma_client = chromadb.PersistentClient(
+            path="./chroma_db"
         )
 
         try:
-            self.collection = self.chroma_client.get_or_create_collection(name="portfolio")
-        except chromadb.errors.ValueError:
+            self.collection = self.chroma_client.get_collection(name="portfolio")
+        except Exception:
             self.collection = self.chroma_client.create_collection(name="portfolio")
 
     def load_portfolio(self):
