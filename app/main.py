@@ -4,10 +4,13 @@ import sys
 # --- Fix for Azure SQLite version issue ---
 # Force Chroma to use the modern bundled SQLite (pysqlite3)
 try:
-    __import__("pysqlite3")
+    import pysqlite3
     sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
+    print("Successfully overridden sqlite3 with pysqlite3")
+except ImportError:
+    print("pysqlite3 not available, using system sqlite3")
 except Exception as e:
-    print(f"SQLite override skipped or failed: {e}")
+    print(f"SQLite override failed: {e}")
 
 # --- Regular imports ---
 import streamlit as st
