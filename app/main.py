@@ -38,9 +38,12 @@ class Portfolio:
         self.data = pd.read_csv(file_path)
 
         # Use Chroma with local persistence
-        self.chroma_client = chromadb.PersistentClient(
-            path="./chroma_db"
-        )
+        # Use Client() instead of PersistentClient() for better Azure compatibility
+        try:
+            self.chroma_client = chromadb.Client()
+        except Exception:
+            # Fallback to PersistentClient if Client() fails
+            self.chroma_client = chromadb.PersistentClient(path="./chroma_db")
 
         try:
             self.collection = self.chroma_client.get_collection(name="portfolio")
