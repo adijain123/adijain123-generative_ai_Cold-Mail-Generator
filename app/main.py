@@ -45,10 +45,8 @@ class Portfolio:
             # Fallback to PersistentClient if Client() fails
             self.chroma_client = chromadb.PersistentClient(path="./chroma_db")
 
-        try:
-            self.collection = self.chroma_client.get_collection(name="portfolio")
-        except Exception:
-            self.collection = self.chroma_client.create_collection(name="portfolio")
+        # Use get_or_create_collection to avoid race conditions
+        self.collection = self.chroma_client.get_or_create_collection(name="portfolio")
 
     def load_portfolio(self):
         if self.collection.count() == 0:
